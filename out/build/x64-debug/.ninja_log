@@ -1,0 +1,9 @@
+# ninja log v5
+11	2384	6898641766470817	CMakeFiles/RFID.dir/serialCom/rfid.cpp.obj	ee2d8c042321248c
+10	2157	6898642713801268	CMakeFiles/RFID.dir/serialCom/rfid.cpp.obj	ee2d8c042321248c
+1	2195	6898642714201246	CMakeFiles/RFID.dir/main.cpp.obj	5a751aa982082358
+2	2240	6898643092350055	CMakeFiles/RFID.dir/serialCom/serialCom_v2.cpp.obj	b76a6c22dcaacc8f
+2242	2759	6898643097400034	RFID.exe	fcfda565d44fc9dc
+14	2287	6898644265656858	CMakeFiles/RFID.dir/serialCom/rfid.cpp.obj	ee2d8c042321248c
+2	2299	6898644265786857	CMakeFiles/RFID.dir/main.cpp.obj	5a751aa982082358
+2300	2575	6898644268092365	RFID.exe	fcfda565d44fc9dc
