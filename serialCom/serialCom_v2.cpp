@@ -8,7 +8,7 @@ bool SerialCom::openSerialPort(const char com_id[], int baud_rate) {
         GENERIC_READ | GENERIC_WRITE,  // open mode: read & write  
         0,
         NULL,
-        OPEN_EXISTING,
+        CREATE_ALWAYS,
         0,
         NULL);
     if (hCom == INVALID_HANDLE_VALUE)
@@ -70,18 +70,17 @@ void SerialCom::calculateCRC16(unsigned char* buf, int len, uint8_t* CRC_L, uint
 
 void SerialCom::calculateCheckSum(unsigned char* buf, int len) {
 
-    BYTE checksum;
+    BYTE checksum =0;
     for (int i = 0; i < len; i++)
     {
-        checksum += buf[i];
+        checksum += *(buf+i);
     }
     checksum = ~checksum + 1;//recipocal +1
-    buf[-1] = checksum;
+    *(buf + len-1) = checksum;
 
 }
-bool SerialCom::sendByte(BYTE* d_arr, int len_input_arr) {
+bool SerialCom::sendByte(BYTE* d_arr, int len) {
     if (lock) {
-
         return false;  //do not open send anything before finish
     }
     lock = 1; //  lock the com 
@@ -90,44 +89,59 @@ bool SerialCom::sendByte(BYTE* d_arr, int len_input_arr) {
     ClearCommError(hCom, &dwErrorFlags, &ComStat);
 
     //d_arr ptr of the 1st digit write until the 8th digit,
-    DWORD dwBytesToWrite = len_input_arr;
+    DWORD dwBytesToWrite = len;
     DWORD dwBytesWrite = 0;
     int dwRel;
 #ifdef DEBUG 
     printf("Serial Transmitted: ");
-    for (int i = 0; i < len_input_arr; i++) {
+    for (int i = 0; i < len; i++) {
         printf("%02x ", *(d_arr + i));
-     }
+    }
     printf("\n");
 #endif
-    dwRel = WriteFile(hCom, d_arr, 8, &dwBytesWrite, NULL);
+    dwRel = WriteFile(hCom, d_arr, len, &dwBytesWrite, NULL);
 
     if (!dwRel) {
         lock = 0;
         return false;
     }
-
-    //rv_arr ptr of the 1st digit read until the 8th digit,
+}
     
-    DWORD dwBytesToRead = 8;
+std::vector<BYTE> SerialCom::readByte(BYTE * d_arr, int len) {
+    if (lock) {
+        return {};  //do not open send anything before finish
+    }
+    lock = 1; //  lock the com 
+    DWORD dwBytesToRead = len;
     DWORD dwBytesRead = 0;
-    dwBytesWrite = 0;
-    dwRel = ReadFile(hCom, &rv_arr, dwBytesToRead, &dwBytesRead, NULL);
+    int dwRel;
+    dwRel = ReadFile(hCom, d_arr, dwBytesToRead, &dwBytesRead, NULL);
+    
+    std::vector<BYTE> vec;
+    //first 4 byte
+    for (int i = 0; i < 5; i++) {
+        vec.push_back(*(d_arr + i));
+    }
+    for (int i = 5; i < *(d_arr + 4); i++) {
+        vec.push_back(*(d_arr + i));
+    }
 
     if (!dwRel) {
         lock = 0;
-        return false;
+        return { 0,0,0,0,0,0,0,0 };
     }
 #ifdef DEBUG 
     printf("Serial Received: ");
     for (int i = 0; i < 8; i++) {
         //print only when byte exist
-        if(rv_arr[i]!= 0xcc){printf("%02x ", rv_arr[i]);}
+        if(d_arr[i]!= 0xcc){printf("%02x ", d_arr[i]);}
+        
+
     }
     printf("\n");
 #endif
     lock = 0;
-    return 0;
+    return vec;
 }
 bool SerialCom::closeSerialPort() {
 
